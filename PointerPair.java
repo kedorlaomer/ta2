@@ -5,4 +5,9 @@ public class PointerPair
     {
         this.a = a; this.b = b;
     }
+
+    public String toString()
+    {
+        return "(" + a + "/" + b + ")";
+    }
 }

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+java IndexCreator
+tmp1=`mktemp`
+tmp2=`mktemp`
+tmp3=`mktemp`
+echo PMIDs > $tmp1
+echo Token IDs > $tmp2
+echo Index > $tmp3
+hexdump -vC pmids.dat >> $tmp1
+hexdump -vC tokenids.dat >> $tmp2
+hexdump -vC index.dat >> $tmp3
+vim -o $tmp1 $tmp2 $tmp3
+rm $tmp1 $tmp2 $tmp3

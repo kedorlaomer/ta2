@@ -1,7 +1,7 @@
-CLASSES = HopscotchPersistent.class HopscotchResident.class PointerPair.class Constants.class
+CLASSES = HopscotchPersistent.class HopscotchResident.class PointerPair.class Constants.class IndexCreator.class InvertedIndex.class
 
 all : $(CLASSES)
-	java HopscotchPersistent
+	java InvertedIndex
 
 dist : clean $(CLASSES)
 	jar cvfm assignment2-grp4.jar META-INF/Manifest *.java *.class
@@ -10,4 +10,7 @@ dist : clean $(CLASSES)
 	javac $<
 
 clean :
-	rm *.dat
+	-rm *.dat
+
+dump : $(CLASSES)
+	./dump

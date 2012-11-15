@@ -98,10 +98,8 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
                 return oldValue;
             }
 
-            if (keys[i]==null && emptyBucket < 0 ){
+            if (keys[i]==null && emptyBucket < 0 )
                 emptyBucket=i;
-                System.out.println("Empty bucket: " + i + " for key " + key);
-            }
         }
 
         if(emptyBucket>=0){
@@ -206,7 +204,7 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
                 {
                     char ch = j < key.length()? key.charAt(j) : 0;
 
-                    if (ch > 0xff)
+                    if (ch > 0x7f)
                         throw new RuntimeException("Non-ASCII character encountered: " + (int) ch);
 
                     out.writeByte((byte) ch);
