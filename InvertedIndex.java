@@ -74,15 +74,32 @@ public class InvertedIndex
 
     public static void main(String[] argv)
     {
-        try
+        String filename;
+        if (argv.length != 1)
         {
-            InvertedIndex index = new InvertedIndex();
-            List<Integer> l = index.tokenidsFromPosition(20);
-            for (int i : l)
-                System.out.println(i);
+            System.err.println("usage: java InvertedIndex <file to index>");
+            System.exit(2);
         }
 
-        catch (IOException exc)
+        filename = argv[0];
+
+        try
+        {
+            XmlParser parser = new XmlParser(filename);
+            IndexCreator ic = new IndexCreator(parser.get());
+            System.err.println("file read");
+            ic.writeIndices();
+            System.err.println("index created");
+            InvertedIndex index = new InvertedIndex();
+
+            String token = "medical";
+            List<PointerPair> infos = index.infoForToken(token);
+
+            for (PointerPair info : infos)
+                System.out.println(info);
+        }
+
+        catch (Throwable exc)
         {
             exc.printStackTrace();
         }
