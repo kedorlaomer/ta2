@@ -1,7 +1,7 @@
 import java.util.*;
 import java.io.*;
 
-public class InvertedIndex
+public class InvertedIndex implements Constants
 {
     RandomAccessFile pmids, tokenids;
     HopscotchPersistent index;
@@ -71,7 +71,11 @@ public class InvertedIndex
         List<Integer> rv = new ArrayList<Integer>(howMany);
 
         for (int i = 0; i < howMany; i++)
-            rv.add(tokenids.readInt());
+        {
+            int id = tokenids.readInt();
+            System.out.println("tokenidsFromPosition: tokenid = " + id);
+            rv.add(id);
+        }
 
         return rv;
     }
@@ -94,13 +98,17 @@ public class InvertedIndex
             System.err.println("file read");
             ic.writeIndices();
             System.err.println("index created");
-            InvertedIndex index = new InvertedIndex();
 
-            String token = "medical";
+            InvertedIndex index = new InvertedIndex();
+            String token = "detecting";
             List<PointerPair> infos = index.infoForToken(token);
 
             for (PointerPair info : infos)
-                System.out.println(info);
+            {
+                System.out.println(token + " occurs in file " + info.a + "; its info is at " + info.b);
+                for (int pos : index.tokenidsFromPosition(info.b))
+                    System.out.println("in position " + pos);
+            }
         }
 
         catch (Throwable exc)

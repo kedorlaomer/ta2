@@ -92,7 +92,8 @@ public class HopscotchPersistent implements Map<String, PointerPair>, Constants
     @Override
     public PointerPair get(Object key)
     {
-        int hashCode = Math.abs(key.hashCode() % length);
+        int hashCode = HopscotchResident.truncatedMD5((String) key);
+        hashCode %= length;
 
         try
         {
@@ -103,6 +104,8 @@ public class HopscotchPersistent implements Map<String, PointerPair>, Constants
             {
                 /* lies einen UTF8'-String */
                 String s = file.readUTF();
+
+                file.seek(pos+STRING_LENGTH);
 
                 int p1 = file.readInt();
                 int p2 = file.readInt();
@@ -127,7 +130,7 @@ public class HopscotchPersistent implements Map<String, PointerPair>, Constants
         {
             RandomAccessFile file = new RandomAccessFile("test.dat", "r");
             HopscotchPersistent table = new HopscotchPersistent(file);
-            PointerPair result = table.get("er");
+            PointerPair result = table.get("fürchterlich");
             System.out.println(result.a + "; " + result.b);
         }
 

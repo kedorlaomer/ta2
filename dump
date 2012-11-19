@@ -1,6 +1,5 @@
 #!/bin/bash
 
-java IndexCreator
 tmp1=`mktemp`
 tmp2=`mktemp`
 tmp3=`mktemp`

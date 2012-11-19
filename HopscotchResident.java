@@ -1,18 +1,34 @@
 import java.util.*;
 import java.io.*;
+import java.security.*;
 
 public class HopscotchResident<K,V> implements Map<K,V>, Constants
 {
 	private int length;
 	private K[] keys;
 	private V[] values;
+    private static MessageDigest md = null;
+
+    static {
+        try
+        {
+            if (md == null)
+                md = MessageDigest.getInstance("MD5");
+        }
+
+        catch (NoSuchAlgorithmException exc)
+        {
+            System.err.println("MD5 is not implemented? Are you using poor-man's java?");
+            System.exit(2);
+        }
+    }
 
 	public HopscotchResident(int length)
-	{
-		this.length = length;
-		keys = (K[])new Object[BUCKET_LENGTH + length];
-		values = (V[])new Object[BUCKET_LENGTH + length];
-	}
+    {
+        this.length = length;
+        keys = (K[]) new Object[BUCKET_LENGTH + length];
+        values = (V[]) new Object[BUCKET_LENGTH + length];
+    }
 
 	@Override
 	public void clear()
@@ -79,6 +95,14 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
 		throw new UnsupportedOperationException();	
 	}
 
+    public static int truncatedMD5(String s)
+    {
+        md.reset();
+        byte[] hashBytes = md.digest(s.getBytes());
+        int keyValue = Math.abs(hashBytes[0] + 256*(hashBytes[1] + 256*(hashBytes[3] + 256*hashBytes[4])));
+        return keyValue;
+    }
+
 
 	/*
 	*Die Methoden interessieren uns
@@ -86,7 +110,7 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
 	@Override
 	public V put(K key, V value)
     {
-        int keyValue = Math.abs(key.hashCode()%length);
+        int keyValue = truncatedMD5((String) key) % length;
         int emptyBucket = -1;
 
         for (int i = keyValue; i<keyValue+BUCKET_LENGTH; i++)
@@ -107,15 +131,28 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
             values[emptyBucket]=value;
             return null;		
         }else{
-            throw new RuntimeException();
-        }
+            System.out.println("Hash table dump; '.' means full entry.");
+            for (int i = 0; i < keys.length; i++)
+            {
+                if ((i & 0xff) == 0)
+                    System.out.println();
 
+                System.out.print(keys[i] == null? ' ' : '.');
+            }
+
+            System.out.println("Keys in the hash table.");
+            for (K k : keys)
+                if (k != null)
+                    System.out.println(k);
+            
+            throw new RuntimeException("Table seems to be full; key: " + key);
+        }
     }
 
 	@Override
 	public V get(Object key)
 	{
-		int keyValue = Math.abs(((K)key).hashCode()%length);
+		int keyValue = truncatedMD5((String) key) % length;
 		for(int i = keyValue; i < keyValue+BUCKET_LENGTH; i++){	
 			if(keys[i] != null && keys[i].equals((K)key)){return values[i];}
 		}
@@ -166,11 +203,12 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
     /*
      * Dateiformat:
      * - Integer length
-     * - 28 Nullen (um einen 32-Byte-Record aufzufüllen)
+     * - einige Nullen (um einen (STRING_LENGTH+8)-Byte-Record
+     *      aufzufüllen)
      * - length Records, wobei jeder Record folgendes enthält:
-     *   - String s aus STRING_LENGTH Bytes
+     *   - String s aus STRING_LENGTH Bytes (mit 0 aufgefüllt)
      *   - Integer p1, Integer p2
-     * Der String s wird durch seine Bytes kodiert, gefolgt von
+     * Der String s wird per writeUTF (UTF-8') kodiert, gefolgt von
      * Nullen, um die Länge STRING_LENGTH zu erreichen.
      *
      * Dieser Kode funktioniert nur, falls K = java.lang.String
@@ -181,8 +219,8 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
     {
         out.writeInt(length);
 
-        /* Nullen */
-        for (int i = 0; i < STRING_LENGTH+8; i++)
+        /* Nullen zum Auffüllen bis zum nächsten Record */
+        for (int i = 0; i < STRING_LENGTH+4; i++)
             out.writeByte(0);
 
         for (int i = 0; i < length+BUCKET_LENGTH; i++)
@@ -206,7 +244,7 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
                 int remaining = STRING_LENGTH - (newPos-oldPos);
 
                 if (remaining < 0)
-                    System.err.println("String '" + "' is too long by " + (-remaining) + " bytes.");
+                    System.out.println("String '" + key + "' is too long by " + (-remaining) + " bytes.");
 
                 for (int j = 0; j < remaining; j++)
                     out.writeByte(0);
