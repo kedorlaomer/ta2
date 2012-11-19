@@ -53,7 +53,9 @@ public class IndexCreator implements Comparator<PointerPair>
             List<PointerPair> pointers = entry.getValue();
             PointerPair pair = new PointerPair(pmidStream.size(), tokenidStream.size());
             resident.put(token, pair);
+            System.err.println("'" + token + "'");
 
+            /*
             SortedSet<Integer> setOfPMIDs = new TreeSet<Integer>();
             for (PointerPair p : pointers)
                 setOfPMIDs.add(p.a);
@@ -66,30 +68,30 @@ public class IndexCreator implements Comparator<PointerPair>
              * vorkommen kann.
              */
 
-            pmidStream.writeInt(setOfPMIDs.size());
+//          pmidStream.writeInt(setOfPMIDs.size());
 
-            for (int pmid : setOfPMIDs)
-            {
-                SortedSet<Integer> setOfTokenIDs = new TreeSet<Integer>();
-                for (PointerPair p : pointers)
-                    if (p.a == pmid)
-                        setOfTokenIDs.add(p.b);
+//          for (int pmid : setOfPMIDs)
+//          {
+//              SortedSet<Integer> setOfTokenIDs = new TreeSet<Integer>();
+//              for (PointerPair p : pointers)
+//                  if (p.a == pmid)
+//                      setOfTokenIDs.add(p.b);
 
-                /* 
-                 * nun schreibe pmid und die Position in
-                 * tokenidStream nach pmidStream; schreibe alle
-                 * Token-IDs (zuvor ihre Anzahl) nach
-                 * tokenidStream
-                 */
+//              /* 
+//               * nun schreibe pmid und die Position in
+//               * tokenidStream nach pmidStream; schreibe alle
+//               * Token-IDs (zuvor ihre Anzahl) nach
+//               * tokenidStream
+//               */
 
-                pmidStream.writeInt(pmid);
-                pmidStream.writeInt(tokenidStream.size());
+//              pmidStream.writeInt(pmid);
+//              pmidStream.writeInt(tokenidStream.size());
 
-                tokenidStream.writeInt(setOfTokenIDs.size());
+//              tokenidStream.writeInt(setOfTokenIDs.size());
 
-                for (int tokenID : setOfTokenIDs)
-                    tokenidStream.writeInt(tokenID);
-            }
+//              for (int tokenID : setOfTokenIDs)
+//                  tokenidStream.writeInt(tokenID);
+//          }
         }
 
         pmidStream.close();
