@@ -19,7 +19,6 @@ public class FindWords
 
     private void init()
     {
-
         this.queryOccurency = 0;
         this.phraseSearchMode = false;
         this.searchTokens = new ArrayList<String>();
@@ -88,7 +87,7 @@ public class FindWords
     }
 
 
-    private boolean createIndexes()
+    private boolean createIndecesIfNeed()
     {
         if (this.contentFile == null) 
             return false;
@@ -108,13 +107,48 @@ public class FindWords
         return true;
     }
 
+
     private void setTokensOccurency()
     {
-        for (Map.Entry<Integer, List<Integer>> entry : this.tokenPositionInDocs.entrySet())
+        if (this.phraseSearchMode)
+            for (Map.Entry<Integer, List<Integer>> entry : this.tokenPositionInDocs.entrySet())
+                this.queryOccurency += entry.getValue().size();
+        else
+            this.queryOccurency = this.tokenPositionInDocs.size();
+    }
+
+
+    private void setIntersectedPmids(HashMap<Integer, List<Integer>> docs)
+    {
+        ArrayList<Integer> intersectedPmids;
+        ArrayList<Integer> newPositions;
+        HashMap<Integer, List<Integer>> tokenInDocsCopy;
+
+        tokenInDocsCopy = new HashMap<Integer, List<Integer>>(this.tokenPositionInDocs);
+        intersectedPmids = new ArrayList(tokenInDocsCopy.keySet());
+        intersectedPmids.retainAll(docs.keySet());
+
+        for (Map.Entry<Integer, List<Integer>> entry : tokenInDocsCopy.entrySet())
         {
-            this.queryOccurency += this.phraseSearchMode? entry.getValue().size() : 1;
+            Integer key = entry.getKey();
+            List<Integer> value = entry.getValue();
+            newPositions = new ArrayList<Integer>();
+
+            if (intersectedPmids.contains(key))
+            {
+                if (this.phraseSearchMode)
+                {
+                    for (int position : value)
+                        if (docs.get(key).contains(position + 1))
+                            newPositions.add(position);
+                    this.tokenPositionInDocs.put(key, newPositions);
+                }
+            }
+            else
+                this.tokenPositionInDocs.remove(key);
         }
     }
+
 
     public void setResult()
     {
@@ -123,45 +157,30 @@ public class FindWords
             InvertedIndex index = new InvertedIndex();
 
             List<PointerPair> tokenInfos;
-            List<Integer> currentPositions = new ArrayList<Integer>();
-            List<Integer> newPositions = new ArrayList<Integer>();
+            List<Integer> currentPositions;
+            HashMap<Integer, List<Integer>> currentTokenPositionInDocs;
             boolean breakCycle = false;
 
             for (int i=0; i<this.searchTokens.size(); i++)
             {
-                tokenInfos = null;
-                try
-                {
-                    tokenInfos = index.infoForToken(this.searchTokens.get(i));
-                }
-                catch (IOException exc)
-                {
-                    exc.printStackTrace();
-                }
+                currentTokenPositionInDocs = new HashMap<Integer, List<Integer>>();
+                currentPositions = new ArrayList<Integer>();
+
+                tokenInfos = index.infoForToken(this.searchTokens.get(i));
                 if (tokenInfos == null)
                     break;
 
                 for (PointerPair info : tokenInfos)
                 {
-                    if (i == 0)
-                        this.tokenPositionInDocs.put(info.a, index.tokenidsFromPosition(info.b));
-                    else if (this.tokenPositionInDocs.containsKey(info.a))
-                    {
-                        if (this.phraseSearchMode)
-                        {
-                            currentPositions = index.tokenidsFromPosition(info.b);
-                            for (int position : this.tokenPositionInDocs.get(info.a))
-                                if (currentPositions.contains(position + 1))
-                                    newPositions.add(position);
-                            this.tokenPositionInDocs.put(info.a, newPositions);
-                            
-                            currentPositions = new ArrayList<Integer>();
-                            newPositions = new ArrayList<Integer>();
-                        }
-                    }
-                    else
-                        this.tokenPositionInDocs.remove(info.a);
+                    if (this.phraseSearchMode)
+                        currentPositions = index.tokenidsFromPosition(info.b);
+                    currentTokenPositionInDocs.put(info.a, currentPositions);
                 }
+                if (i == 0)
+                    this.tokenPositionInDocs = currentTokenPositionInDocs;
+                else
+                    this.setIntersectedPmids(currentTokenPositionInDocs);
+
                 if (this.tokenPositionInDocs.size() == 0)
                     break;
             }
@@ -179,7 +198,8 @@ public class FindWords
     {
         System.out.println("The Pub Med ID of every match: ");
         for (Map.Entry<Integer, List<Integer>> entry : this.tokenPositionInDocs.entrySet())
-            System.out.println(entry.getKey());
+            System.out.print(entry.getKey() + " ");
+        System.out.println();
 
         if (this.phraseSearchMode)
             System.out.println(
@@ -205,7 +225,7 @@ public class FindWords
         FindWords finder = new FindWords();
 
         finder.handleArgs(args);
-        // finder.createIndexes();
+        finder.createIndecesIfNeed();
         finder.setResult();
         finder.printResults();
         finder.printDebugInfo();
