@@ -4,38 +4,53 @@ import java.util.*;
 
 public class FindWords
 {
-    private static File contentFile;
-    public static String contentFilePath;
+    private File contentFile;
+    public String contentFilePath;
 
-    public static boolean phraseSearchMode = false;
-    public static ArrayList<String> searchQuery;
+    public boolean phraseSearchMode;
+    public List<String> searchTokens;
 
-    public static final String WORDS_DELIMITER = " ";
-    public static final String INDEX_ARG = "--index";
+    public Integer queryOccurency;
+    private HashMap<Integer, List<Integer>> tokenPositionInDocs;
+
+    public final String WORDS_DELIMITER = " ";
+    public final String INDEX_ARG = "--index";
 
 
-    private FindWords(){}
-
-    private static void handleIndexArg() 
+    private void init()
     {
-        if (contentFilePath == null)
+
+        this.queryOccurency = 0;
+        this.phraseSearchMode = false;
+        this.searchTokens = new ArrayList<String>();
+        this.tokenPositionInDocs = new HashMap<Integer, List<Integer>>();
+    }
+
+
+    private FindWords()
+    {
+        this.init();
+    }
+
+
+    private void handleIndexArg() 
+    {
+        if (this.contentFilePath == null)
             return;
 
-        contentFile = new File(contentFilePath);
-        if (!contentFile.exists())
+        contentFile = new File(this.contentFilePath);
+        if (!this.contentFile.exists())
         {
-            contentFile = null;
-            System.err.println("Index file do not exists: " + contentFilePath);
+            this.contentFile = null;
+            System.err.println("Index file do not exists: " + this.contentFilePath);
         }
     }
 
-    private static void handleArgs(String[] args)
-    {
 
-        searchQuery = new ArrayList<String>();
+    private void handleArgs(String[] args)
+    {
         //TODO: Find a better name!
         boolean isNextArgContentFilePath = false;
-
         for (String arg: args)
             if (arg.equals(INDEX_ARG))
                 isNextArgContentFilePath = true;
@@ -43,80 +58,156 @@ public class FindWords
             {
                 if (isNextArgContentFilePath)
                 {
-                    contentFilePath = arg;
+                    this.contentFilePath = arg;
                     isNextArgContentFilePath = false;
                 }
-                else if (!phraseSearchMode)
+                else if (!this.phraseSearchMode)
                 {
                     if (arg.indexOf(WORDS_DELIMITER) != -1)
                     {
                         // When we have found a phrase, we are ignoring the rest
-                        searchQuery.clear();
+                        this.searchTokens.clear();
 
                         for (String word: arg.split("\\s+"))
-                            searchQuery.add(word);
+                            this.searchTokens.add(word);
 
-                        phraseSearchMode = true;
+                        this.phraseSearchMode = true;
                     } 
                     else
-                        searchQuery.add(arg);
+                        this.searchTokens.add(arg);
                 }
             }
 
-        if (searchQuery.size() == 0)
+        if (this.searchTokens.size() == 0)
         {
             System.err.println("Give a search query.");
             System.exit(1);
         }
 
-        FindWords.handleIndexArg();
+        this.handleIndexArg();
     }
 
-    private static boolean createIndexes()
-    {
-        if (contentFile == null) {
-            return false;
-        }
 
-        // TODO: create Index Files here
+    private boolean createIndexes()
+    {
+        if (this.contentFile == null) 
+            return false;
+
+        try
+        {
+            XmlParser parser = new XmlParser(this.contentFile.getPath());
+            IndexCreator ic = new IndexCreator(parser.get());
+            System.out.println("file read");
+            ic.writeIndices();
+            System.out.println("index created");
+        }
+        catch (Throwable exc)
+        {
+            exc.printStackTrace();
+        }
         return true;
     }
 
-    public static void printDebugInfo()
+    private void setTokensOccurency()
     {
-        System.out.println("query: " + FindWords.searchQuery);
-        System.out.println("phrase search mode: " + FindWords.phraseSearchMode);
-        System.out.println("content file: " + FindWords.contentFile);
+        for (Map.Entry<Integer, List<Integer>> entry : this.tokenPositionInDocs.entrySet())
+        {
+            this.queryOccurency += this.phraseSearchMode? entry.getValue().size() : 1;
+        }
     }
 
-    // public static void printResults(Object results)
-    // {
-    //     System.out.println("The Pub Med ID of every match: ");
-    //     for (String pmid: results.pmids)
-    //         System.out.println(pmid);
+    public void setResult()
+    {
+        try
+        {
+            InvertedIndex index = new InvertedIndex();
 
-    //     if (phraseSearchMode)
-    //     {
-    //         System.out.println(
-    //             "Phrase Search. Total number of occurency: " + results.phraseOccurency);
-    //     }
-    //     else
-    //     {
-    //         System.out.println(
-    //             "Total number of occurency matching the query: " + results.queryOccurency);
-    //     }
-    // }
+            List<PointerPair> tokenInfos;
+            List<Integer> currentPositions = new ArrayList<Integer>();
+            List<Integer> newPositions = new ArrayList<Integer>();
+            boolean breakCycle = false;
+
+            for (int i=0; i<this.searchTokens.size(); i++)
+            {
+                tokenInfos = null;
+                try
+                {
+                    tokenInfos = index.infoForToken(this.searchTokens.get(i));
+                }
+                catch (IOException exc)
+                {
+                    exc.printStackTrace();
+                }
+                if (tokenInfos == null)
+                    break;
+
+                for (PointerPair info : tokenInfos)
+                {
+                    if (i == 0)
+                        this.tokenPositionInDocs.put(info.a, index.tokenidsFromPosition(info.b));
+                    else if (this.tokenPositionInDocs.containsKey(info.a))
+                    {
+                        if (this.phraseSearchMode)
+                        {
+                            currentPositions = index.tokenidsFromPosition(info.b);
+                            for (int position : this.tokenPositionInDocs.get(info.a))
+                                if (currentPositions.contains(position + 1))
+                                    newPositions.add(position);
+                            this.tokenPositionInDocs.put(info.a, newPositions);
+                            
+                            currentPositions = new ArrayList<Integer>();
+                            newPositions = new ArrayList<Integer>();
+                        }
+                    }
+                    else
+                        this.tokenPositionInDocs.remove(info.a);
+                }
+                if (this.tokenPositionInDocs.size() == 0)
+                    break;
+            }
+
+            this.setTokensOccurency();
+        }
+        catch(IOException exc)
+        {
+            exc.printStackTrace();
+        }
+    }
+
+
+    public void printResults()
+    {
+        System.out.println("The Pub Med ID of every match: ");
+        for (Map.Entry<Integer, List<Integer>> entry : this.tokenPositionInDocs.entrySet())
+            System.out.println(entry.getKey());
+
+        if (this.phraseSearchMode)
+            System.out.println(
+                "Phrase Search. Total number of occurency: " + this.queryOccurency);
+        else
+            System.out.println(
+                "Total number of occurency matching the query: " + this.queryOccurency);
+    }
+
+
+    public void printDebugInfo()
+    {
+        System.out.println("-------------DEBUG-START");
+        System.out.println("query: " + this.searchTokens);
+        System.out.println("phrase search mode: " + this.phraseSearchMode);
+        System.out.println("content file: " + this.contentFile);
+        System.out.println("-------------DEBUG-END");
+    }
+
 
     public static void main(String[] args)
     {
-        FindWords.handleArgs(args);
+        FindWords finder = new FindWords();
 
-        boolean indexesCreated = FindWords.createIndexes();
-
-        // Call search here
-        // Object results = new Object();
-        // FindWords.printResults(results);
-
-        FindWords.printDebugInfo();
+        finder.handleArgs(args);
+        finder.createIndexes();
+        finder.setResult();
+        finder.printResults();
+        finder.printDebugInfo();
     }
 }
