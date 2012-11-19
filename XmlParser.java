@@ -43,27 +43,34 @@ public class XmlParser implements Constants
 		}
 	}
 
+
 	private static void tokenizeText(String text, int pmid, boolean inAbstract)
 	{	
 		if(text.length()>0)
 		{
 			String[] list = text.split("\\s");
-			for( int i = 0; i < list.length-1; i++)
+			int cont = 0;
+			for(String roughWord : list)
 			{
-				if(list[i].length()>0)
+				if(roughWord.length()>0)
 				{ 
-					String currentWord = list[i].toLowerCase();
-					System.out.println(currentWord);
+					String currentWord = roughWord.toLowerCase();
+					System.out.println(currentWord + " at position " + cont);
+					if (currentWord.equals("detecting"))
+					{
+						System.out.println("'detecting' detected in PMID " + new Integer(pmid).toString() +" at position " + new Integer(cont).toString());
+					}
 					PointerPair p = new PointerPair(0,0);			
+					
 					if(inAbstract)
 					{
 						p.a = pmid;
-						p.b = i|ABSTRACT_MASK;	
+						p.b = cont|ABSTRACT_MASK;	
 					}
 					else
 					{
 						p.a = pmid;
-						p.b = i;	
+						p.b = cont;	
 					}
 
 					if(hm.containsKey(currentWord))
@@ -78,6 +85,7 @@ public class XmlParser implements Constants
 						aux.add(p);
 						hm.put(currentWord,aux);
 					}
+					cont++;
 				}
 			}
 		}
@@ -89,7 +97,6 @@ public class XmlParser implements Constants
 		if(nlList.getLength()>0)
 		{
 			nlList = nlList.item(0).getChildNodes();
-
 		}	
 		if(nlList.getLength()>0)
 		{
@@ -106,6 +113,7 @@ public class XmlParser implements Constants
 	{
 		return hm;
 	}
+
 
 	public static void main(String[] args)
 	{
