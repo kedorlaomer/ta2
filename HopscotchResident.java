@@ -181,8 +181,8 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
     {
         out.writeInt(length);
 
-        /* 28 Nullen */
-        for (int i = 0; i < 28; i++)
+        /* Nullen */
+        for (int i = 0; i < STRING_LENGTH+8; i++)
             out.writeByte(0);
 
         for (int i = 0; i < length+BUCKET_LENGTH; i++)
@@ -200,15 +200,16 @@ public class HopscotchResident<K,V> implements Map<K,V>, Constants
             else
             {
                 /* String s */
-                for (int j = 0; j < STRING_LENGTH; j++)
-                {
-                    char ch = j < key.length()? key.charAt(j) : 0;
+                int oldPos = out.size();
+                out.writeUTF(key);
+                int newPos = out.size();
+                int remaining = STRING_LENGTH - (newPos-oldPos);
 
-                    if (ch > 0x7f)
-                        throw new RuntimeException("Non-ASCII character encountered: " + (int) ch);
+                if (remaining < 0)
+                    System.err.println("String '" + "' is too long by " + (-remaining) + " bytes.");
 
-                    out.writeByte((byte) ch);
-                }
+                for (int j = 0; j < remaining; j++)
+                    out.writeByte(0);
 
                 PointerPair p = (PointerPair) values[i];
                 int p1 = p.a; int p2 = p.b;
