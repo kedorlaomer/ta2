@@ -21,6 +21,8 @@ public class InvertedIndex
     public List<Integer> pmidsForToken(String token) throws IOException
     {
         PointerPair pair = index.get(token);
+        if (pair == null)
+            return null;
         pmids.seek(pair.a);
 
         int howMany = pmids.readInt();
@@ -43,6 +45,8 @@ public class InvertedIndex
     public List<PointerPair> infoForToken(String token) throws IOException
     {
         PointerPair pair = index.get(token);
+        if (pair == null)
+            return null;
         pmids.seek(pair.a);
 
         int howMany = pmids.readInt();
