@@ -103,9 +103,10 @@ public class HopscotchPersistent implements Map<String, PointerPair>, Constants
             for (int i = 0; i < BUCKET_LENGTH; i++)
             {
                 /* lies einen UTF8'-String */
+                file.seek(pos+i*(STRING_LENGTH+8));
                 String s = file.readUTF();
 
-                file.seek(pos+STRING_LENGTH);
+                file.seek(pos+i*(STRING_LENGTH+8) + STRING_LENGTH);
 
                 int p1 = file.readInt();
                 int p2 = file.readInt();

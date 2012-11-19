@@ -55,11 +55,6 @@ public class XmlParser implements Constants
 				if(roughWord.length()>0)
 				{ 
 					String currentWord = roughWord.toLowerCase();
-					System.out.println(currentWord + " at position " + cont);
-					if (currentWord.equals("detecting"))
-					{
-						System.out.println("'detecting' detected in PMID " + new Integer(pmid).toString() +" at position " + new Integer(cont).toString());
-					}
 					PointerPair p = new PointerPair(0,0);			
 					
 					if(inAbstract)

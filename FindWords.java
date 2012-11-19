@@ -205,7 +205,7 @@ public class FindWords
         FindWords finder = new FindWords();
 
         finder.handleArgs(args);
-        finder.createIndexes();
+        // finder.createIndexes();
         finder.setResult();
         finder.printResults();
         finder.printDebugInfo();
