@@ -10,7 +10,8 @@ public class FindWords
     public boolean phraseSearchMode;
     public List<String> searchTokens;
 
-    public Integer queryOccurency;
+    public Integer queryOccurrences;
+    public Integer phraseOccurrences;
     private HashMap<Integer, List<Integer>> tokenPositionInDocs;
 
     public final String WORDS_DELIMITER = " ";
@@ -19,7 +20,8 @@ public class FindWords
 
     private void init()
     {
-        this.queryOccurency = 0;
+        this.queryOccurrences = 0;
+        this.phraseOccurrences = 0;
         this.phraseSearchMode = false;
         this.searchTokens = new ArrayList<String>();
         this.tokenPositionInDocs = new HashMap<Integer, List<Integer>>();
@@ -108,17 +110,16 @@ public class FindWords
     }
 
 
-    private void setTokensOccurency()
+    private void setTokensOccurrences()
     {
         if (this.phraseSearchMode)
             for (Map.Entry<Integer, List<Integer>> entry : this.tokenPositionInDocs.entrySet())
-                this.queryOccurency += entry.getValue().size();
-        else
-            this.queryOccurency = this.tokenPositionInDocs.size();
+                this.phraseOccurrences += entry.getValue().size();
+        this.queryOccurrences = this.tokenPositionInDocs.size();
     }
 
 
-    private void setIntersectedPmids(HashMap<Integer, List<Integer>> docs)
+    private void setIntersectedPmids(HashMap<Integer, List<Integer>> docs, String word)
     {
         ArrayList<Integer> intersectedPmids;
         ArrayList<Integer> newPositions;
@@ -127,6 +128,12 @@ public class FindWords
         tokenInDocsCopy = new HashMap<Integer, List<Integer>>(this.tokenPositionInDocs);
         intersectedPmids = new ArrayList(tokenInDocsCopy.keySet());
         intersectedPmids.retainAll(docs.keySet());
+
+        if (intersectedPmids.size() == 0)
+        {
+            this.tokenPositionInDocs.clear();
+            return;
+        }
 
         for (Map.Entry<Integer, List<Integer>> entry : tokenInDocsCopy.entrySet())
         {
@@ -141,7 +148,10 @@ public class FindWords
                     for (int position : value)
                         if (docs.get(key).contains(position + 1))
                             newPositions.add(position);
-                    this.tokenPositionInDocs.put(key, newPositions);
+                    if (newPositions.size() > 0)
+                        this.tokenPositionInDocs.put(key, newPositions);
+                    else
+                        this.tokenPositionInDocs.remove(key);
                 }
             }
             else
@@ -168,7 +178,10 @@ public class FindWords
 
                 tokenInfos = index.infoForToken(this.searchTokens.get(i));
                 if (tokenInfos == null)
+                {
+                    this.tokenPositionInDocs.clear();
                     break;
+                }
 
                 for (PointerPair info : tokenInfos)
                 {
@@ -179,13 +192,13 @@ public class FindWords
                 if (i == 0)
                     this.tokenPositionInDocs = currentTokenPositionInDocs;
                 else
-                    this.setIntersectedPmids(currentTokenPositionInDocs);
+                    this.setIntersectedPmids(currentTokenPositionInDocs, this.searchTokens.get(i));
 
                 if (this.tokenPositionInDocs.size() == 0)
                     break;
             }
 
-            this.setTokensOccurency();
+            this.setTokensOccurrences();
         }
         catch(IOException exc)
         {
@@ -201,12 +214,12 @@ public class FindWords
             System.out.print(entry.getKey() + " ");
         System.out.println();
 
+        System.out.println(
+            "Total number of occurrences matching the query: " + this.queryOccurrences);
+
         if (this.phraseSearchMode)
             System.out.println(
-                "Phrase Search. Total number of occurency: " + this.queryOccurency);
-        else
-            System.out.println(
-                "Total number of occurency matching the query: " + this.queryOccurency);
+                "Phrase Search. Total number of occurrences: " + this.phraseOccurrences);
     }
 
 
@@ -228,6 +241,6 @@ public class FindWords
         finder.createIndecesIfNeed();
         finder.setResult();
         finder.printResults();
-        finder.printDebugInfo();
+        // finder.printDebugInfo();
     }
 }
