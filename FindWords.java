@@ -147,7 +147,7 @@ public class FindWords
                 {
                     for (int position : value)
                         if (docs.get(key).contains(position + 1))
-                            newPositions.add(position);
+                            newPositions.add(position + 1);
                     if (newPositions.size() > 0)
                         this.tokenPositionInDocs.put(key, newPositions);
                     else
@@ -166,6 +166,7 @@ public class FindWords
         {
             InvertedIndex index = new InvertedIndex();
 
+            String word;
             List<PointerPair> tokenInfos;
             List<Integer> currentPositions;
             HashMap<Integer, List<Integer>> currentTokenPositionInDocs;
@@ -173,10 +174,11 @@ public class FindWords
 
             for (int i=0; i<this.searchTokens.size(); i++)
             {
+                word = this.searchTokens.get(i).toLowerCase();
                 currentTokenPositionInDocs = new HashMap<Integer, List<Integer>>();
                 currentPositions = new ArrayList<Integer>();
 
-                tokenInfos = index.infoForToken(this.searchTokens.get(i));
+                tokenInfos = index.infoForToken(word);
                 if (tokenInfos == null)
                 {
                     this.tokenPositionInDocs.clear();
@@ -192,7 +194,7 @@ public class FindWords
                 if (i == 0)
                     this.tokenPositionInDocs = currentTokenPositionInDocs;
                 else
-                    this.setIntersectedPmids(currentTokenPositionInDocs, this.searchTokens.get(i));
+                    this.setIntersectedPmids(currentTokenPositionInDocs, word);
 
                 if (this.tokenPositionInDocs.size() == 0)
                     break;
