@@ -3,7 +3,7 @@ import java.util.*;
 
 /* erzeugt die drei Indizes index.dat, pmids.dat, tokenids.dat */
 
-public class IndexCreator implements Comparator<PointerPair>
+public class IndexCreator implements Comparator<PointerPair>, Constants
 {
     private Map<String, List<PointerPair>> index;
     public IndexCreator(Map<String, List<PointerPair>> index)
@@ -74,6 +74,15 @@ public class IndexCreator implements Comparator<PointerPair>
                 for (PointerPair p : pointers)
                     if (p.a == pmid)
                         setOfTokenIDs.add(p.b);
+
+                if (pmid == 142570)
+                {
+                    System.out.print(token + ":");
+                     for (int tokenID : setOfTokenIDs)
+                         System.out.print(" " + (tokenID & (~ABSTRACT_MASK)));
+
+                    System.out.println();
+                }
 
                 /* 
                  * nun schreibe pmid und die Position in

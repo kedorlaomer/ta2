@@ -81,35 +81,27 @@ public class InvertedIndex implements Constants
 
     public static void main(String[] argv)
     {
-        String filename;
+        String token;
         if (argv.length != 1)
         {
-            System.err.println("usage: java InvertedIndex <file to index>");
+            System.err.println("usage: java InvertedIndex <word>");
             System.exit(2);
         }
 
-        filename = argv[0];
+        token = argv[0];
 
         try
         {
-            /*
-            XmlParser parser = new XmlParser(filename);
+            XmlParser parser = new XmlParser("test_08n0147.xml");
             IndexCreator ic = new IndexCreator(parser.get());
             System.err.println("file read");
             ic.writeIndices();
             System.err.println("index created");
-            */
 
             InvertedIndex index = new InvertedIndex();
-            String token = "blue";
             List<PointerPair> infos = index.infoForToken(token);
-
-            for (PointerPair info : infos)
-            {
-                System.out.println(token + " occurs in file #" + info.a);
-                for (int pos : index.tokenidsFromPosition(info.b))
-                    System.out.println("\tin position " + (pos & (~ABSTRACT_MASK)));
-            }
+            for (PointerPair pair : infos)
+                System.out.println(pair.a);
         }
 
         catch (Throwable exc)

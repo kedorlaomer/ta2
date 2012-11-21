@@ -79,10 +79,10 @@ public class FindWords
                 }
             }
 
-        if (this.searchTokens.size() == 0)
+        if (this.searchTokens.size() == 0 && contentFilePath == null)
         {
-            System.err.println("Give a search query.");
-            System.exit(1);
+            System.err.println("Give a search query or specify a content file.");
+            System.exit(2);
         }
 
         this.handleIndexArg();
