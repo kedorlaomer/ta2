@@ -53,17 +53,18 @@ public class XmlParser implements Constants
 
 	private static void tokenizeText(String[] texts, int pmid, boolean inAbstract)
         {
-                //Wenn es Elemente zum tokenisieren
+                //Wenn es Elemente zum tokenisieren gibt, dann editieren wir jedes Element alleine.
 		if(texts.length>0)
                 {
+			//cont ist die Position des Wortes im Text. Wenn mehr Texte vorhanden sind, dann sind die Positionen konsekutiv aber es gibt ein Sprung von zwei Positionen von Text zu Text
                         int cont = 0;
 			for( int i = 0; i < texts.length; i++)
 			{
-				//Im Fall dass es mehrere Texte mit dem selben Tag gibt, dann tokenisieren wir alle, aber speichern eine Position mehr von Text zu Text, so das sie nicht nacheinander sind.
-				if(cont>0)
-					cont = cont + 2;
 				if (texts[i]!=null)
 				{
+					//Im Fall dass es mehrere Texte mit dem selben Tag gibt, dann tokenisieren wir alle, aber speichern eine Position mehr von Text zu Text, so das sie nicht nacheinander sind.
+	                                if(cont>0){cont++;}
+
 					String[] list = texts[i].split("\\s");
                         
                         		for(String roughWord : list)
@@ -71,11 +72,10 @@ public class XmlParser implements Constants
                                 		if(roughWord.length()>0)
                                 		{
                                         		String currentWord = roughWord.toLowerCase();
-                                        		//System.out.println(currentWord + " at position " + cont);
-                                        		//if (currentWord.equals("detecting"))
-                                        		//{
-                                                		//System.out.println("'detecting' detected in PMID " + new Integer(pmid).toString() +" at position " + new Integer(cont).toString());
-                                        		//}
+                                        		/*if (pmid == 896889)
+							{	
+								System.out.println(currentWord + " at position " + cont + " and PMID: " + pmid + " in Abstract " + inAbstract);
+                                        		}*/
                                         		PointerPair p = new PointerPair(0,0);
 
                                         		if(inAbstract)
