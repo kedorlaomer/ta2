@@ -75,15 +75,6 @@ public class IndexCreator implements Comparator<PointerPair>, Constants
                     if (p.a == pmid)
                         setOfTokenIDs.add(p.b);
 
-                if (pmid == 142570)
-                {
-                    System.out.print(token + ":");
-                     for (int tokenID : setOfTokenIDs)
-                         System.out.print(" " + (tokenID & (~ABSTRACT_MASK)));
-
-                    System.out.println();
-                }
-
                 /* 
                  * nun schreibe pmid und die Position in
                  * tokenidStream nach pmidStream; schreibe alle

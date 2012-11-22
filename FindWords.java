@@ -15,7 +15,7 @@ public class FindWords
     private HashMap<Integer, List<Integer>> tokenPositionInDocs;
 
     public final String WORDS_DELIMITER = " ";
-    public final String INDEX_ARG = "--index";
+    public final String INDEX_ARG = "-index";
 
 
     private void init()
